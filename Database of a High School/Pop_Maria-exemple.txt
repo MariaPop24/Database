@@ -1,0 +1,133 @@
+--11 - 1) Afisati numele, numarul clasei, numele specializarii si al profilului pentru elevii care studiaza la profilul real. Ordonati rezultatele in ordinea descrescatoare a clasei. 
+
+select E.ELEV_NUME, C.CLASA_NUMAR, S.SPECIALIZARE_NUME, P.PROFIL_NUME 
+
+FROM ELEVI E JOIN CLASA C ON (E.CLASA_ID=C.CLASA_ID) 
+
+JOIN SPECIALIZARE S ON (C.SPECIALIZARE_ID=S.SPECIALIZARE_ID) 
+
+JOIN PROFIL P ON (P.PROFIL_ID=S.PROFIL_ID) 
+
+WHERE P.PROFIL_NUME='REAL' 
+
+ORDER BY 2 DESC; 
+
+--2) Afisati numarul de clase mai mici de clasa a 11-a. 
+
+SELECT CLASA_NUMAR, COUNT(CLASA_NUMAR) 
+
+FROM CLASA 
+
+WHERE CLASA_NUMAR < 11 
+
+GROUP BY CLASA_NUMAR; 
+
+ -- 3) Afisati numele cu majuscule, prenumele cu prima litera majuscula si celelalte litere minuscule, prima zi de munca (prima zi de luni dupa data angajarii) si numarul de luni de munca pentru profesori. 
+
+SELECT UPPER(PROFESOR_NUME) AS NUME, INITCAP(PROFESOR_PRENUME) AS PRENUME, NEXT_DAY(DATA_ANGAJARII, 'MONDAY') AS ZI, FLOOR(MONTHS_BETWEEN(SYSDATE, DATA_ANGAJARII)) AS LUNI 
+
+FROM PROFESORI; 
+
+
+ -- 4) Afisati numele, prenumele, daca au date de contact (email), daca sunt angajati in 2020 pentru profesori. De asemenea, afisati salariul conform urmatoarei reguli: daca numele profesorului este “CIOCARLAN”, afisati salariul mai mare cu 100 de lei; daca este “MUNTEANU”, mai mare cu 200 de lei si daca este “IVAN”, mai mare cu 300 de lei. 
+
+SELECT PROFESOR_NUME AS NUME, PROFESOR_PRENUME AS PRENUME, 
+
+       NVL(EMAIL, 'NU ARE') AS "ARE DATE DE CONTACT?", DECODE(EXTRACT(YEAR FROM DATA_ANGAJARII), 2020, 'DA', 'NU') AS "ANGAJAT IN 2020?",  
+
+       CASE PROFESOR_NUME 
+
+       WHEN 'CIOCARLAN' THEN (SALARIU + 100) 
+
+       WHEN 'MUNTEANU' THEN (SALARIU + 200) 
+
+       WHEN 'IVAN' THEN (SALARIU + 300) 
+
+       ELSE SALARIU 
+
+       END AS SALARIU 
+
+FROM PROFESORI; 
+
+--5) Afisati elevii care invata in clasa care are numarul maxim de elevi. 
+
+SELECT E.* 
+
+FROM ELEVI E 
+
+WHERE E.CLASA_ID IN (SELECT C.CLASA_ID 
+
+                     FROM ELEVI E, CLASA C 
+
+                     WHERE E.CLASA_ID=C.CLASA_ID 
+
+                     GROUP BY C.CLASA_LITERA, C.CLASA_ID 
+
+                     HAVING COUNT(*) = (SELECT MIN(COUNT(*)) 
+
+                                        FROM ELEVI E, CLASA C 
+
+                                        WHERE E.CLASA_ID = C.CLASA_ID 
+
+                                        GROUP BY C.CLASA_LITERA, C.CLASA_ID)); 
+
+-- 6) Afisati numele elevilor care invata intr-o clasa in care exista cel putin un elev cu lungimea numelui egala cu lungimea maxima a numelui unui elev din clasa cu id-ul 3. 
+
+SELECT ELEV_NUME, ELEV_PRENUME 
+
+FROM ELEVI E 
+
+WHERE EXISTS (SELECT 1 
+
+              FROM ELEVI  
+
+              WHERE E.CLASA_ID=CLASA_ID 
+
+              AND LENGTH(ELEV_NUME) =(SELECT MAX(LENGTH(ELEV_NUME)) 
+
+                                     FROM ELEVI 
+
+                                     WHERE CLASA_ID = 3)); 
+
+
+-- 12 - stergerea liniilor din tabela ELEVI pe care se gaseste lungimea maxima a numelui; 
+
+DELETE FROM ELEVI 
+
+WHERE LENGTH(ELEV_NUME) = (SELECT MAX(LENGTH(ELEV_NUME)) FROM ELEVI); 
+
+--marirea cu 20% fata de salariul maxim al bibliotecarilor pentru bibliotecarul cu id-ul = 1  
+
+UPDATE BIBLIOTECAR 
+
+SET B_SALARIU = (  
+
+  SELECT MAX(B_SALARIU) * 1.2  
+
+  FROM BIBLIOTECAR  
+
+)  
+
+WHERE BIBLIOTECAR_ID = 1; 
+
+
+--marirea salariilor cu 10% pentru profesorii care au salariul mai mic decat 3500 
+
+UPDATE PROFESOR 
+
+SET SALARIU =  
+
+(SELECT MAX(SALARIU) * 1.1   
+
+FROM PROFESOR) 
+
+WHERE SALARIU < 3500; 
+
+
+-- 13
+CREATE SEQUENCE SEQ
+START WITH 1
+INCREMENT BY 1
+MINVALUE 1
+NOCYCLE
+NOCACHE;
